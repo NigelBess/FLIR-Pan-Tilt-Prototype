@@ -1,0 +1,26 @@
+motor = 0
+
+Loop1:
+//SAP: set axis parameter
+// SAP <parameter number>, <axis>, <value>
+SAP 6, motor, 50//max current. (value/255)*inputCurrent
+SAP 140, motor, 6//mictrostep resolution (f) 2^value
+SAP 154, motor, 0//pulse_div
+
+SAP 3, motor, 0//actual speed 
+SAP 5, motor, 100//max accel
+
+
+//This part is trying to make a for loop. for (motor = 0,motor<=0,motor++)
+GGP motor, 2//write motor to accumulator register
+CALC ADD, 1//add 1 to accumulator register
+AAP motor, 2//write contents of accumulator register to motor
+COMP 0//write zero to comparison register
+JC LE, Loop1//check that contents of accumulator are < comparison register?. If true jump to Loop1
+
+
+
+//ROR: Rotate Right
+//ROR <axis>, <velocity>
+ROR 0, 1000// rpm = value/2047*maxSpeedRpm
+ROR 1, 1000// rpm = value/2047*maxSpeedRpm

@@ -1,0 +1,95 @@
+DEMOSTART:
+
+//StallGuard Parameters
+SAP 6, 0, 64					//Set max current
+SAP 7, 0, 8					//Set standby current
+SAP 173, 0, 0					//Set StallGuard filter
+SAP 174, 0, 2					//Set StallGuard threshold
+SAP 181, 0, 150					//Set StallGuard stall velocity
+
+//Closed Loop Parameters
+SAP 124, 0, 65536    			//CL correction position P
+SAP 125, 0, 100    				//CL max. correction tolerance
+SAP 134, 0, 10000    			//Positioning window
+SAP 115, 0, 5000    				//CL correction velocity P
+SAP 116, 0, 2000    				//CL correction velocity I
+SAP 117, 0, 10   				//CL correction velocity I clipping
+SAP 118, 0, 0    				//CL correction velocity DV clock
+SAP 119, 0, 500000    			//CL correction velocity DV clipping
+SAP 113, 0, 100    				//CL current minimum
+SAP 114, 0, 255    				//CL current maximum
+SAP 120, 0, 1000    				//CL upscale delay
+SAP 121, 0, 10000    			//CL downscale delay
+SAP 126, 0, 0    				//CL start up
+SAP 108, 0, 300000    			//CLGammaVMin
+SAP 109, 0, 600000    			//CLGammaVMax
+SAP 110, 0, 255    				//CL maximum gamma
+
+SAP 4, 0, 500000				//Set velocity
+SAP 5, 0, 500000				//Set acceleration
+SAP 17, 0, 500000				//Set deceleration
+
+SGP 0, 2, 0					//Custom parameter for StallGuard Loop
+SGP 1, 2, 0					//Custom parameter for CLLoop
+//Main Program
+
+	StallLoopOne:
+		GAP 3, 0				//Getting speed of motor
+		JC NZ, StallLoopOne		//If speed is not zero go to top of loop
+		ROR 0, 500000			//Move right with given speed
+		GGP 0, 2 				//get user variable #0 to accu
+		CALC ADD, 1 			//add 1 to accu
+		AGP 0, 2 				//accu to user variable #0
+		COMP 6 				//amount of loops
+		JC GE, ResetToZero 		//jump to label StopLoop
+		JA StallLoopTwo			//Jump to second Stall Loop
+	StallLoopTwo:
+		GAP 3, 0				//Getting speed of motor
+		JC NZ, StallLoopTwo		//If speed is not zero go to top of loop
+		ROL 0, 500000			//Move left with given speed
+		GGP 0, 2 				//get user variable #0 to accu
+		CALC ADD, 1			//add 1 to accu
+		AGP 0, 2 				//accu to user variable #0
+		COMP 6 				//amount of loops
+		JC GE, ResetToZero 		//jump to label StopLoop
+		JA StallLoopOne			//Jump to first Stall Loop
+
+
+ResetToZero:
+	WAIT TICKS, 0, 700			//This loop is a double check for
+	MVP 1, 0, 200000			//the motor to make sure it is at 
+	WAIT POS, 0, 200			//position zero during CL operation
+	ROL 0, 500000				//
+	WAIT TICKS, 0, 700			//
+
+//Parameter Changes
+	SAP 1, 0, 0				//Set position to zero
+	SAP 209, 0, 0				//Set encoder position to zero
+	SAP 174, 0, 0				//StallGuard threshold off
+	SAP 181, 0, 0				//StallGuard Velocity off
+	SAP 6, 0, 150				//Set Current for CL
+	SAP 129, 0, 1				//Turn on CL
+
+WaitLoop:
+	GAP 133, 0
+	JC ZE, WaitLoop	
+
+CLLoop:
+	MVP 0, 0, 2800000				//Move to given position
+	WAIT POS, 0, 0				//Wait until position is reached
+	MVP 0, 0, 300000				//Move to given position
+	WAIT POS, 0, 0				//Wait until position is reached
+	GGP 1, 2 					//get user variable #0 to accu
+	CALC ADD, 1					//Add 1 to accu
+	AGP 1, 2 					//accumulator to user variable 1
+	COMP 4 					//Compare to user variable 1
+	JC GE, ResetLoop				//Jump to ResetLoop if user variable 1 is >= to COMP value 
+	JA CLloop
+	
+ResetLoop:
+	SAP 129, 0, 0				//Turn CL off
+	WAIT TICKS, 0, 1000			//Wait to space demo out
+	JA DEMOSTART
+
+	
+	
