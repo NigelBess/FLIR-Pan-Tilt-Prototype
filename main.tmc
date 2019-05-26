@@ -13,10 +13,11 @@ tiltMaxExpectedVoltageDelta = 950
 panMaxExpectedVoltageDelta = 970
 joystickOffMaxVoltage = 40
 maxTiltUp = 100000
-maxTiltDown = -210000
+maxTiltDown = -240000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 300
+standByCurrentValue = 0
 
 
 //**********DONT CHANGE THESE************
@@ -59,7 +60,7 @@ Start:
 //SAP: set axis parameter
 // SAP <parameter number>, <axis>, <value>
 SAP maxCurrent, tiltMotor, 128//max current. (value/255)*inputCurrent
-SAP standByCurrent, tiltMotor, 8
+SAP standByCurrent, tiltMotor, standByCurrentValue
 SAP stallGuardFilter, tiltMotor, 0
 SAP stallGuardThreshold, tiltMotor, 20
 SAP stallGuardSpeed, tiltMotor, threshold
@@ -96,7 +97,7 @@ AAP encoderMode, tiltMotor
 
 //********PAN AXIS PARAMS********************
 SAP maxCurrent, panMotor, 128//max current. (value/255)*inputCurrent
-SAP standByCurrent, panMotor, 8
+SAP standByCurrent, panMotor, standByCurrentValue
 SAP stallGuardFilter, panMotor, 0
 SAP stallGuardThreshold, panMotor, 20
 SAP stallGuardSpeed, panMotor, threshold
