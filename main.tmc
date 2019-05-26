@@ -3,9 +3,11 @@ tiltSignal = 4 // 4: analog io 1
 //panMotor = 0
 
 //User values
-threshold = 20//min analog signal value to cause motor rotation
+threshold = 100//min speed reading to cause motor rotation
+maxSpeed = 1000
 
-//axis params to names
+//**********DONT CHANGE THESE************
+//axis params to names DONT CHANGE THESE
 maxCurrent = 6
 microStepRes = 140
 pulseDiv = 154
@@ -13,6 +15,13 @@ actualSpeed = 3
 targetSpeed = 2
 maxAccel = 5
 rampMode = 138
+standByCurrent = 7
+freewheelTime = 204
+smartEnergySpeed = 182
+stallGuardFilter = 173
+stallGuardThreshold = 174
+stallGuardSpeed = 181
+//**********DONT CHANGE THESE************
 
 //other
 analogInputRes = 4095
@@ -24,12 +33,16 @@ panVel = 1
 Start:
 //SAP: set axis parameter
 // SAP <parameter number>, <axis>, <value>
-SAP maxCurrent, tiltMotor, 50//max current. (value/255)*inputCurrent
-SAP microStepRes,tiltMotor, 6//mictrostep resolution (f) 2^value
-SAP pulseDiv, tiltMotor, 0//pulse_div
+SAP maxCurrent, tiltMotor, 64//max current. (value/255)*inputCurrent
+SAP standByCurrent, tiltMotor, 8
+SAP stallGuardFilter, tiltMotor, 0
+SAP stallGuardThreshold, tiltMotor, 2
+SAP stallGuardSpeed, tiltMotor, threshold
 
+SAP microStepRes,tiltMotor, 5//mictrostep resolution (f) 2^value
+SAP pulseDiv, tiltMotor, 1//pulse_div
 SAP actualSpeed, tiltMotor, 0//actual speed 
-SAP maxAccel, tiltMotor, 100//max accel
+SAP maxAccel, tiltMotor, 300//max accel
 SAP rampMode, tiltMotor, 2//velocity mode
 
 //SGP: set global parameter
@@ -55,32 +68,39 @@ mainLoop:
 
 	// if accu is zero (below threshold), set tilt velocity to zero
 	CALC DIV, threshold
-	JC NZ, endIf0
-		AGP tiltVel, 2
-	endIf0:
+	JC ZE, tiltStop
 
 	//GGP: Get global parameter
 	//GGP <parameter number>, <bank>
 	GGP tiltVel, 2//restore old value to accumulator
-	COMP 0
+	//COMP 0
 	
 	//if greater than zero subtract threshold
-	JC LT, endIf1
-		CALC SUB, threshold
-	endIf1:
+	//JC LT, endIf1
+	//	CALC SUB, threshold
+	//endIf1:
 
-	 //if less than zero add threshold
-	JC GT, endIf2
-		CALC ADD, threshold
-	endIf2:
-	
+	// if less than zero add threshold
+	//JC GT, endIf2
+	//	CALC ADD, threshold
+	//endIf2:
+	//COMP maxSpeed
+	//JC LT, endIf3
+		
+	//endIf3:
 	//AAP: Accumulator to axis parameter
 	//AAP <parameter number>, <motor number>
 	AAP targetSpeed, tiltMotor// set target speed
 	// rpm = value/2047*maxSpeedRpm
-
+	endTilt:
 //JA: jump always
 JA mainLoop
+
+tiltStop:
+	GAP actualSpeed, tiltMotor
+	JC ZE, endTilt
+	SAP targetSpeed, tiltMotor, 0// set target speed
+JA endTilt
 
 
 

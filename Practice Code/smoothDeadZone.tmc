@@ -1,0 +1,106 @@
+tiltMotor = 1
+tiltSignal = 4 // 4: analog io 1
+//panMotor = 0
+
+//User values
+threshold = 100//min analog signal value to cause motor rotation
+maxSpeed = 1000
+
+//**********DONT CHANGE THESE************
+//axis params to names DONT CHANGE THESE
+maxCurrent = 6
+microStepRes = 140
+pulseDiv = 154
+actualSpeed = 3
+targetSpeed = 2
+maxAccel = 5
+rampMode = 138
+standByCurrent = 7
+stallGuardSpeed = 181
+freewheelTime = 204
+smartEnergySpeed = 182
+//**********DONT CHANGE THESE************
+
+//other
+analogInputRes = 4095
+
+//userParams
+tiltVel = 0
+panVel = 1
+
+Start:
+//SAP: set axis parameter
+// SAP <parameter number>, <axis>, <value>
+SAP maxCurrent, tiltMotor, 200//max current. (value/255)*inputCurrent
+SAP microStepRes,tiltMotor, 6//mictrostep resolution (f) 2^value
+SAP pulseDiv, tiltMotor, 0//pulse_div
+SAP stallGuardSpeed, tiltMotor, 0
+SAP actualSpeed, tiltMotor, 0//actual speed 
+SAP maxAccel, tiltMotor, 100//max accel
+SAP rampMode, tiltMotor, 2//velocity mode
+SAP standByCurrent, tiltMotor, 0//
+SAP smartEnergySpeed, tiltMotor, 500//
+//SGP: set global parameter
+//SGP <parameter number>, <bank>, <value>
+SGP tiltVel, 2, 0//create user var temp
+
+mainLoop:
+	//GIO: Get Input
+	//GIO <port number>, <bank number>
+	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
+	//analog input: 0 to 10v volts correstponds to 0-4095
+
+	//Tilt signal is zeroed at ~1730
+	CALC SUB, 1730
+	CALC MUL, -1//tilt axis voltage is reversed
+	//CALC DIV, 2//analog signal goes has max value 4095. Now 2047 to match speed param size
+	//CALC MUL, 2//joystick has max output 5v, but signal takes 10v
+	//previous two lines negate eachother so I commented them out
+
+	//AGP: Accumulator to global param
+	//AGP <parameter number>, <bank>
+	AGP tiltVel, 2
+
+	// if accu is zero (below threshold), set tilt velocity to zero
+	CALC DIV, threshold
+	JC ZE, tiltStop
+
+	//GGP: Get global parameter
+	//GGP <parameter number>, <bank>
+	GGP tiltVel, 2//restore old value to accumulator
+	COMP 0
+	
+	//if greater than zero subtract threshold
+	JC LT, endIf1
+		CALC SUB, threshold
+	endIf1:
+
+	 //if less than zero add threshold
+	JC GT, endIf2
+		CALC ADD, threshold
+	endIf2:
+	
+	COMP maxSpeed
+	JC LT, endIf3
+		
+	endIf3:
+	//AAP: Accumulator to axis parameter
+	//AAP <parameter number>, <motor number>
+	AAP targetSpeed, tiltMotor// set target speed
+	// rpm = value/2047*maxSpeedRpm
+	endTilt:
+//JA: jump always
+JA mainLoop
+
+tiltStop:
+	GAP actualSpeed, tiltMotor
+	COMP threshold
+	JC LT, endTilt
+	MST tiltMotor
+JA endTilt
+
+
+
+//ROR: Rotate Right
+//ROR <axis>, <velocity>
+//ROR tiltMotor, 1000// rpm = value/2047*maxSpeedRpm
