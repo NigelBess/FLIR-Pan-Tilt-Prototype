@@ -9,7 +9,7 @@ maxSpeed = 1000
 joystickOffLowerValue = 1600
 
 //**********DONT CHANGE THESE************
-//axis params to names DONT CHANGE THESE
+//these convert axis params to names DONT CHANGE THESE
 maxCurrent = 6
 microStepRes = 140
 pulseDiv = 154
@@ -42,8 +42,20 @@ SAP stallGuardFilter, tiltMotor, 0
 SAP stallGuardThreshold, tiltMotor, 2
 SAP stallGuardSpeed, tiltMotor, threshold
 
+
+//   microStepRes | Pusle Div | maxSpeed (rpm)
+//        6       |     0     |     2342
+//        5       |     1     |     2342
+//        4       |     2     |     2342 
+//        3       |     3     |     2342 
+//        2       |     4     |     2342 
+//Minimum recomeended microstepRes: 3
+//Trinamics recommends maximizing microStepRes
+//values greater than 6 don't work for the speed range we need
+
 SAP microStepRes,tiltMotor, 6//mictrostep resolution (f) 2^value
 SAP pulseDiv, tiltMotor, 0//pulse_div
+
 SAP actualSpeed, tiltMotor, 0//actual speed 
 SAP maxAccel, tiltMotor, 300//max accel
 SAP rampMode, tiltMotor, 2//velocity mode
@@ -60,8 +72,10 @@ SGP tiltOffset, 2, 0
 
 mainLoop:
 
+	//load tilt offset into x accumulator
 	GGP tiltOffset, 2
-	CALCX LOAD
+	CALCX  
+
 	//GIO: Get Input
 	//GIO <port number>, <bank number>
 	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
