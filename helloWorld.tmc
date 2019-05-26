@@ -1,0 +1,16 @@
+tiltMotor = 1
+//panMotor = 1
+
+Start:
+//SAP: set axis parameter
+// SAP <parameter number>, <axis>, <value>
+SAP 6, tiltMotor, 50//max current. (value/255)*inputCurrent
+SAP 140,tiltMotor, 6//mictrostep resolution (f) 2^value
+SAP 154, tiltMotor, 0//pulse_div
+
+SAP 3, tiltMotor, 0//actual speed 
+SAP 5, tiltMotor, 100//max accel
+
+//ROR: Rotate Right
+//ROR <axis>, <velocity>
+ROR tiltMotor, 500// rpm = value/2047*maxSpeedRpm

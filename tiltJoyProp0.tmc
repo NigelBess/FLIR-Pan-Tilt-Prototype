@@ -1,0 +1,57 @@
+tiltMotor = 1
+tiltSignal = 4 // 4: analog io 1
+//panMotor = 1
+
+
+//axis params to names
+maxCurrent = 6
+microStepRes = 140
+pulseDiv = 154
+actualSpeed = 3
+targetSpeed = 2
+maxAccel = 5
+rampMode = 138
+
+//other
+analogInputRes = 4095
+
+//userParams
+tiltVelocity = 0
+
+Start:
+//SAP: set axis parameter
+// SAP <parameter number>, <axis>, <value>
+SAP maxCurrent, tiltMotor, 50//max current. (value/255)*inputCurrent
+SAP microStepRes,tiltMotor, 6//mictrostep resolution (f) 2^value
+SAP pulseDiv, tiltMotor, 0//pulse_div
+
+SAP actualSpeed, tiltMotor, 0//actual speed 
+SAP maxAccel, tiltMotor, 100//max accel
+SAP rampMode, tiltMotor, 2//velocity mode
+
+mainLoop:
+	//GIO: Get Input
+	//GIO <port number>, <bank number>
+	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
+	//analog input: 0 to 10v volts correstponds to 0-4095
+
+	//GGP: Get global parameter
+	// GGP <parameter number>, <bank>
+	//GGP 0, 2//write var 0 to accumulator
+	
+	CALC DIV, 2//analog signal goes 0-4095. Now 0-2047 to match speed
+	CALC DIV, 2//dvide by two b/c voltage is limited to 5v by joysitck
+	
+	
+	
+	//AAP: Accumulator to axis parameter
+	//AAP <parameter number>, <motor number>
+	AAP targetSpeed, tiltMotor// set target speed
+	// rpm = value/2047*maxSpeedRpm
+
+//JA: jump always
+JA mainLoop
+
+//ROR: Rotate Right
+//ROR <axis>, <velocity>
+//ROR tiltMotor, 1000// rpm = value/2047*maxSpeedRpm
