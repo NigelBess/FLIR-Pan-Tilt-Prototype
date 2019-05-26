@@ -13,4 +13,4 @@ SAP 5, tiltMotor, 100//max accel
 
 //ROR: Rotate Right
 //ROR <axis>, <velocity>
-ROR tiltMotor, 500// rpm = value/2047*maxSpeedRpm
+ROR tiltMotor, 1000// rpm = value/2047*maxSpeedRpm

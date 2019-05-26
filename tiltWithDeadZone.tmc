@@ -1,7 +1,9 @@
 tiltMotor = 1
 tiltSignal = 4 // 4: analog io 1
-//panMotor = 1
+//panMotor = 0
 
+//User values
+threshold = 20//min analog signal value to cause motor rotation
 
 //axis params to names
 maxCurrent = 6
@@ -16,7 +18,8 @@ rampMode = 138
 analogInputRes = 4095
 
 //userParams
-tiltVelocity = 0
+tiltVel = 0
+panVel = 1
 
 Start:
 //SAP: set axis parameter
@@ -28,6 +31,10 @@ SAP pulseDiv, tiltMotor, 0//pulse_div
 SAP actualSpeed, tiltMotor, 0//actual speed 
 SAP maxAccel, tiltMotor, 100//max accel
 SAP rampMode, tiltMotor, 2//velocity mode
+
+//SGP: set global parameter
+//SGP <parameter number>, <bank>, <value>
+SGP tiltVel, 2, 0//create user var temp
 
 mainLoop:
 	//GIO: Get Input
@@ -41,7 +48,20 @@ mainLoop:
 	//CALC DIV, 2//analog signal goes has max value 4095. Now 2047 to match speed param size
 	//CALC MUL, 2//joystick has max output 5v, but signal takes 10v
 	//previous two lines negate eachother so I commented them out
-	
+
+	//AGP: Accumulator to global param
+	//AGP <parameter number>, <bank>
+	AGP tiltVel, 2
+
+	// if accu is zero (below threshold), set tilt velocity to zero
+	CALC DIV, threshold
+	JC NZ, endIf0
+		AGP tiltVel, 2
+	endIf0:
+
+	//GGP: Get global parameter
+	//GGP <parameter number>, <bank>
+	GGP tiltVel, 2//load temp to accumulator (restore old value)
 	
 	//AAP: Accumulator to axis parameter
 	//AAP <parameter number>, <motor number>
@@ -51,7 +71,8 @@ mainLoop:
 //JA: jump always
 JA mainLoop
 
+
+
 //ROR: Rotate Right
 //ROR <axis>, <velocity>
 //ROR tiltMotor, 1000// rpm = value/2047*maxSpeedRpm
-© 2019 GitHub, Inc.
