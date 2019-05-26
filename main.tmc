@@ -1,3 +1,4 @@
+// pin numbers
 tiltMotor = 1
 tiltSignal = 4 // 4: analog io 1
 //panMotor = 0
@@ -5,6 +6,7 @@ tiltSignal = 4 // 4: analog io 1
 //User values
 threshold = 100//min speed reading to cause motor rotation
 maxSpeed = 1000
+joystickOffLowerValue = 1600
 
 //**********DONT CHANGE THESE************
 //axis params to names DONT CHANGE THESE
@@ -29,6 +31,7 @@ analogInputRes = 4095
 //userParams
 tiltVel = 0
 panVel = 1
+tiltOffset = 2
 
 Start:
 //SAP: set axis parameter
@@ -39,24 +42,33 @@ SAP stallGuardFilter, tiltMotor, 0
 SAP stallGuardThreshold, tiltMotor, 2
 SAP stallGuardSpeed, tiltMotor, threshold
 
-SAP microStepRes,tiltMotor, 5//mictrostep resolution (f) 2^value
-SAP pulseDiv, tiltMotor, 1//pulse_div
+SAP microStepRes,tiltMotor, 6//mictrostep resolution (f) 2^value
+SAP pulseDiv, tiltMotor, 0//pulse_div
 SAP actualSpeed, tiltMotor, 0//actual speed 
 SAP maxAccel, tiltMotor, 300//max accel
 SAP rampMode, tiltMotor, 2//velocity mode
 
+//create user vars
 //SGP: set global parameter
 //SGP <parameter number>, <bank>, <value>
-SGP tiltVel, 2, 0//create user var temp
+SGP tiltVel, 2, 0
+SGP tiltOffset, 2, 0
+
+//save tiltOffset (zero voltage of joystick)
+	GIO tiltSignal, 1
+	AGP tiltOffset, 2
 
 mainLoop:
+
+	GGP tiltOffset, 2
+	CALCX LOAD
 	//GIO: Get Input
 	//GIO <port number>, <bank number>
 	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
 	//analog input: 0 to 10v volts correstponds to 0-4095
 
 	//Tilt signal is zeroed at ~1730
-	CALC SUB, 1730
+	CALCX SUB
 	CALC MUL, -1//tilt axis voltage is reversed
 	//CALC DIV, 2//analog signal goes has max value 4095. Now 2047 to match speed param size
 	//CALC MUL, 2//joystick has max output 5v, but signal takes 10v
@@ -65,7 +77,8 @@ mainLoop:
 	//AGP: Accumulator to global param
 	//AGP <parameter number>, <bank>
 	AGP tiltVel, 2
-
+	COMP joystickOffLowerValue
+	JC GE, pauseTillBackOn
 	// if accu is zero (below threshold), set tilt velocity to zero
 	CALC DIV, threshold
 	JC ZE, tiltStop
@@ -102,6 +115,12 @@ tiltStop:
 	SAP targetSpeed, tiltMotor, 0// set target speed
 JA endTilt
 
+pauseTillBackOn:
+	SAP targetSpeed, tiltMotor, 0// set target speed
+	GIO tiltSignal, 1
+	COMP joystickOffLowerValue
+	JC LE, mainLoop 
+JA pauseTillBackOn
 
 
 //ROR: Rotate Right
