@@ -1,8 +1,6 @@
 // pin numbers
 tiltMotor = 1
-panMotor = 0
 tiltSignal = 4 // 4: analog io 1
-panSignal = 0
 //panMotor = 0
 
 //User values
@@ -10,13 +8,10 @@ threshold = 100//min speed reading to cause motor rotation
 maxSpeed = 1500
 joystickOffLowerValue = 1600
 tiltMaxExpectedVoltageDelta = 950
-panMaxExpectedVoltageDelta = 970
 joystickOffMaxVoltage = 40
 maxTiltUp = 100000
-maxTiltDown = -210000
+maxTiltDown = -250000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
-encoderPrescaleValue = 4674113// (713213 for decimal)
-maxAccelValue = 300
 
 
 //**********DONT CHANGE THESE************
@@ -49,13 +44,10 @@ panVel = 1
 tiltOffset = 2
 tiltEnc = 3
 temp = 4
-panOffset = 5
 
 
 
 Start:
-
-//********TILT AXIS PARAMS********************
 //SAP: set axis parameter
 // SAP <parameter number>, <axis>, <value>
 SAP maxCurrent, tiltMotor, 128//max current. (value/255)*inputCurrent
@@ -92,32 +84,12 @@ SAP encoderPrescaler, tiltMotor, 4674113//713213
 CALC LOAD, 1
 AAP encoderMode, tiltMotor
 
-
-
-//********PAN AXIS PARAMS********************
-SAP maxCurrent, panMotor, 128//max current. (value/255)*inputCurrent
-SAP standByCurrent, panMotor, 8
-SAP stallGuardFilter, panMotor, 0
-SAP stallGuardThreshold, panMotor, 20
-SAP stallGuardSpeed, panMotor, threshold
-SAP microStepRes,panMotor, 6//mictrostep resolution (f) 2^value
-SAP pulseDiv, panMotor, 0//pulse_div
-SAP actualSpeed, panMotor, 0//actual speed 
-SAP maxAccel, panMotor, maxAccelValue//max accel
-SAP rampMode, panMotor, 2//velocity mode
-SAP encoderPrescaler, panMotor, encoderPrescaleValue
-CALC LOAD, 1
-AAP encoderMode, panMotor
-
-
 //create user vars
 //SGP: set global parameter
 //SGP <parameter number>, <bank>, <value>
 SGP tiltVel, 2, 0
 SGP tiltOffset, 2, 0
 SGP temp, 2, 0
-SGP panOffset, 2, 0
-SGP panVel, 2, 0
 
 
 
@@ -140,8 +112,6 @@ mainLoop:
 	GAP encoderPos, tiltMotor
 	AGP tiltEnc, 2
 	STGP tiltEnc, 2
-
-	//*******TILT********
 	//load tilt offset into x accumulator
 	GGP tiltOffset, 2
 	CALCX  LOAD
@@ -183,27 +153,6 @@ mainLoop:
 	AAP targetSpeed, tiltMotor// set target speed
 	// rpm = value/2047*maxSpeedRpm
 	endTilt:
-
-
-
-	//*******PAN*********
-	GGP panOffset, 2
-	CALCX LOAD
-	GIO panSignal, 1
-	CALCX SUB
-	AGP panVel, 2
-	CALC DIV, threshold
-	JC ZE, panStop
-	GGP panVel, 2//restore old value to accumulator
-	COMP 0
-	JC LT, movingLeft
-	JC GT, movingRight
-	CALC MUL, maxSpeed
-	CALC DIV, panMaxExpectedVoltageDelta
-	endPanCalc:
-		AAP targetSpeed, panMotor
-	endPan:
-	
 //JA: jump always
 JA mainLoop
 
@@ -212,12 +161,6 @@ tiltStop:
 	JC ZE, endTilt
 	SAP targetSpeed, tiltMotor, 0// set target speed
 JA endTilt
-
-panStop:
-	GAP actualSpeed, panMotor
-	JC ZE, endPan
-	SAP targetSpeed, panMotor, 0
-JA endPan
 
 joystickOff:
 	GAP actualSpeed, tiltMotor
@@ -256,16 +199,6 @@ movingDown:
 	CALC MUL, -1
 JA endTiltCalc
 
-movingRight:
-	CSUB rectify
-JA endPanCalc
-
-movingLeft:
-	CALC MUL, -1
-	CSUB rectify
-	CALC MUL, -1
-JA endPanCalc
-
 rectify:
 	CALC SUB, threshold
 	COMP maxSpeed
@@ -280,6 +213,4 @@ zeroJoystick:
 //save tiltOffset (zero voltage of joystick)
 	GIO tiltSignal, 1
 	AGP tiltOffset, 2
-	GIO panSignal, 1
-	AGP panOffset, 2
 RSUB

@@ -1,0 +1,8 @@
+// pin numbers
+tiltMotor = 1
+
+//user vars
+tiltEnc = 3
+
+SGP tiltEnc, 2, 0
+STGP tiltEnc, 2
