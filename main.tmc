@@ -100,17 +100,17 @@ mainLoop:
 	//GGP: Get global parameter
 	//GGP <parameter number>, <bank>
 	GGP tiltVel, 2//restore old value to accumulator
-	//COMP 0
+	COMP 0
 	
 	//if greater than zero subtract threshold
-	//JC LT, endIf1
-	//	CALC SUB, threshold
-	//endIf1:
+	JC LT, endIf1
+		CALC SUB, threshold
+	endIf1:
 
-	// if less than zero add threshold
-	//JC GT, endIf2
-	//	CALC ADD, threshold
-	//endIf2:
+	//if less than zero add threshold
+	JC GT, endIf2
+		CALC ADD, threshold
+	endIf2:
 	//COMP maxSpeed
 	//JC LT, endIf3
 		
