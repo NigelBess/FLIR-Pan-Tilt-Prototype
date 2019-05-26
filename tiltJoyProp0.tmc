@@ -35,13 +35,12 @@ mainLoop:
 	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
 	//analog input: 0 to 10v volts correstponds to 0-4095
 
-	//GGP: Get global parameter
-	// GGP <parameter number>, <bank>
-	//GGP 0, 2//write var 0 to accumulator
-	
-	CALC DIV, 2//analog signal goes 0-4095. Now 0-2047 to match speed
-	CALC DIV, 2//dvide by two b/c voltage is limited to 5v by joysitck
-	
+	//Tilt signal is zeroed at ~1730
+	CALC SUB, 1730
+	CALC MUL, -1//tilt axis voltage is reversed
+	//CALC DIV, 2//analog signal goes has max value 4095. Now 2047 to match speed param size
+	//CALC MUL, 2//joystick has max output 5v, but signal takes 10v
+	//previous two lines negate eachother so I commented them out
 	
 	
 	//AAP: Accumulator to axis parameter
