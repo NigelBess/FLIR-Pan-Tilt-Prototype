@@ -5,8 +5,10 @@ tiltSignal = 4 // 4: analog io 1
 
 //User values
 threshold = 100//min speed reading to cause motor rotation
-maxSpeed = 1000
+maxSpeed = 1500
 joystickOffLowerValue = 1600
+tiltMaxExpectedVoltageDelta = 950
+joystickOffMaxVoltage = 40
 
 //**********DONT CHANGE THESE************
 //these convert axis params to names DONT CHANGE THESE
@@ -33,13 +35,15 @@ tiltVel = 0
 panVel = 1
 tiltOffset = 2
 
+
+
 Start:
 //SAP: set axis parameter
 // SAP <parameter number>, <axis>, <value>
-SAP maxCurrent, tiltMotor, 64//max current. (value/255)*inputCurrent
+SAP maxCurrent, tiltMotor, 128//max current. (value/255)*inputCurrent
 SAP standByCurrent, tiltMotor, 8
 SAP stallGuardFilter, tiltMotor, 0
-SAP stallGuardThreshold, tiltMotor, 2
+SAP stallGuardThreshold, tiltMotor, 20
 SAP stallGuardSpeed, tiltMotor, threshold
 
 
@@ -66,15 +70,20 @@ SAP rampMode, tiltMotor, 2//velocity mode
 SGP tiltVel, 2, 0
 SGP tiltOffset, 2, 0
 
-//save tiltOffset (zero voltage of joystick)
+
+
+waitLoop:
 	GIO tiltSignal, 1
-	AGP tiltOffset, 2
+	COMP joystickOffMaxVoltage
+	JC LT, waitLoop
+
+CSUB zeroJoystick
 
 mainLoop:
 
 	//load tilt offset into x accumulator
 	GGP tiltOffset, 2
-	CALCX  
+	CALCX  LOAD
 
 	//GIO: Get Input
 	//GIO <port number>, <bank number>
@@ -91,30 +100,23 @@ mainLoop:
 	//AGP: Accumulator to global param
 	//AGP <parameter number>, <bank>
 	AGP tiltVel, 2
-	COMP joystickOffLowerValue
-	JC GE, pauseTillBackOn
+	
 	// if accu is zero (below threshold), set tilt velocity to zero
 	CALC DIV, threshold
 	JC ZE, tiltStop
-
 	//GGP: Get global parameter
 	//GGP <parameter number>, <bank>
 	GGP tiltVel, 2//restore old value to accumulator
-	COMP 0
-	
-	//if greater than zero subtract threshold
-	JC LT, endIf1
-		CALC SUB, threshold
-	endIf1:
 
-	//if less than zero add threshold
-	JC GT, endIf2
-		CALC ADD, threshold
-	endIf2:
-	//COMP maxSpeed
-	//JC LT, endIf3
-		
-	//endIf3:
+	COMP 0
+	JC LT, movingDown
+	JC GT, movingUp
+
+	//convert from reading to speed
+	CALC MUL, maxSpeed
+	CALC DIV, tiltMaxExpectedVoltageDelta
+	
+	endTiltCalc:
 	//AAP: Accumulator to axis parameter
 	//AAP <parameter number>, <motor number>
 	AAP targetSpeed, tiltMotor// set target speed
@@ -129,14 +131,40 @@ tiltStop:
 	SAP targetSpeed, tiltMotor, 0// set target speed
 JA endTilt
 
-pauseTillBackOn:
-	SAP targetSpeed, tiltMotor, 0// set target speed
-	GIO tiltSignal, 1
+joystickOff:
+	GAP actualSpeed, tiltMotor
+	JC ZE, endIf4
+		SAP targetSpeed, tiltMotor, 0// set target speed
+	endIf4:
+JA mainLoop
+
+movingUp:
+	//check if joystick is off
 	COMP joystickOffLowerValue
-	JC LE, mainLoop 
-JA pauseTillBackOn
+	JC GE, joystickOff
+	CSUB rectify
+JA endTiltCalc
 
+movingDown:
+	CALC MUL, -1
+	//check if joystick is off
+	COMP joystickOffLowerValue
+	JC GE, joystickOff
+	CSUB rectify
+	CALC MUL, -1
+JA endTiltCalc
 
-//ROR: Rotate Right
-//ROR <axis>, <velocity>
-//ROR tiltMotor, 1000// rpm = value/2047*maxSpeedRpm
+rectify:
+	CALC SUB, threshold
+	COMP maxSpeed
+	JC LT, endIF5
+		CALC LOAD, maxSpeed
+	endIF5:
+RSUB
+
+zeroJoystick:
+	WAIT TICKS, tiltMotor, 50
+//save tiltOffset (zero voltage of joystick)
+	GIO tiltSignal, 1
+	AGP tiltOffset, 2
+RSUB
