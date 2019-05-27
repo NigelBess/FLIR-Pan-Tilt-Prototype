@@ -7,13 +7,13 @@ panSignal = 0
 
 //User values
 threshold = 100//min speed reading to cause motor rotation
-maxSpeed = 1500
+maxSpeed = 800
 joystickOffLowerValue = 1600
-tiltMaxExpectedVoltageDelta = 950
-panMaxExpectedVoltageDelta = 970
+tiltMaxExpectedVoltageDelta = 850
+panMaxExpectedVoltageDelta = 850
 joystickOffMaxVoltage = 40
 maxTiltUp = 100000
-maxTiltDown = -240000
+maxTiltDown = -210000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 300
@@ -131,11 +131,8 @@ waitLoop:
 
 CSUB zeroJoystick
 
-//load saved value of encoder
-RSGP tiltEnc, 2
-GGP tiltEnc, 2
-AAP encoderPos, tiltMotor
-AAP actualPos, tiltMotor
+CSUB loadEncoderValue
+
 
 mainLoop:
 	GAP encoderPos, tiltMotor
@@ -169,15 +166,14 @@ mainLoop:
 	//GGP: Get global parameter
 	//GGP <parameter number>, <bank>
 	GGP tiltVel, 2//restore old value to accumulator
+	
+	//convert from reading to speed
+	CALC MUL, maxSpeed
+	CALC DIV, tiltMaxExpectedVoltageDelta
 
 	COMP 0
 	JC LT, movingDown
 	JC GT, movingUp
-
-	//convert from reading to speed
-	CALC MUL, maxSpeed
-	CALC DIV, tiltMaxExpectedVoltageDelta
-	
 	endTiltCalc:
 	//AAP: Accumulator to axis parameter
 	//AAP <parameter number>, <motor number>
@@ -196,13 +192,16 @@ mainLoop:
 	CALC DIV, threshold
 	JC ZE, panStop
 	GGP panVel, 2//restore old value to accumulator
+
+	CALC MUL, maxSpeed
+	CALC DIV, panMaxExpectedVoltageDelta
+	CALC MUL, -1
 	COMP 0
 	JC LT, movingLeft
 	JC GT, movingRight
-	CALC MUL, maxSpeed
-	CALC DIV, panMaxExpectedVoltageDelta
+	
 	endPanCalc:
-		AAP targetSpeed, panMotor
+	AAP targetSpeed, panMotor
 	endPan:
 	
 //JA: jump always
@@ -225,6 +224,10 @@ joystickOff:
 	JC ZE, endIf4
 		SAP targetSpeed, tiltMotor, 0// set target speed
 	endIf4:
+	GAP actualSpeed, panMotor
+	JC ZE, endIf9
+		SAP targetSpeed, panMotor, 0// set target speed
+	endIf9:
 JA mainLoop
 
 movingUp:
@@ -283,4 +286,13 @@ zeroJoystick:
 	AGP tiltOffset, 2
 	GIO panSignal, 1
 	AGP panOffset, 2
+RSUB
+
+loadEncoderValue:
+	//load saved value of encoder
+	WAIT TICKS, tiltMotor, 100
+	RSGP tiltEnc, 2
+	GGP tiltEnc, 2
+	AAP encoderPos, tiltMotor
+	AAP actualPos, tiltMotor
 RSUB
