@@ -131,7 +131,7 @@ waitLoop:
 
 CSUB zeroJoystick
 
-//CSUB loadEncoderValue
+CSUB loadEncoderValue
 
 
 mainLoop:
