@@ -52,6 +52,8 @@ tiltOffset = 2
 tiltEnc = 3
 temp = 4
 panOffset = 5
+panSignalVar = 7
+tiltSignalVar = 8
 
 
 
@@ -120,6 +122,8 @@ SGP tiltOffset, 2, 0
 SGP temp, 2, 0
 SGP panOffset, 2, 0
 SGP panVel, 2, 0
+SGP panSignalVar, 2, 0
+SGP tiltSignalVar, 2, 0
 
 
 
@@ -136,29 +140,37 @@ CSUB loadEncoderValue
 
 
 mainLoop:
-	CSUB modEncoder
+	//save position to permanent memory
 	GAP actualPos, tiltMotor
 	AGP tiltEnc, 2
 	STGP tiltEnc, 2
 
+	//get signals
+	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
+	AGP tiltSignalVar, 2
+	GIO panSIgnal, 1
+	AGP panSignalVar, 2
+ 	
+	//if both signals are zero, the joystick must be off
+	COMP joystickOffMaxVoltage
+	JC GE, endIf11
+		GGP tiltSignalVar, 2
+		JC GE, endIf11
+		JA joystickOff
+	endIf11:
+	
+	
 	//*******TILT********
 	//load tilt offset into x accumulator
 	GGP tiltOffset, 2
 	CALCX  LOAD
-
-	//GIO: Get Input
-	//GIO <port number>, <bank number>
-	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
-	//analog input: 0 to 10v volts correstponds to 0-4095
-	//Tilt signal is zeroed at ~1730
+	GGP tiltSignalVar, 2
 	CALCX SUB	
 	CALC MUL, -1//tilt axis voltage is reversed
 	//CALC DIV, 2//analog signal goes has max value 4095. Now 2047 to match speed param size
 	//CALC MUL, 2//joystick has max output 5v, but signal takes 10v
 	//previous two lines negate eachother so I commented them out
 
-	//AGP: Accumulator to global param
-	//AGP <parameter number>, <bank>
 	AGP tiltVel, 2
 	
 	// if accu is zero (below threshold), set tilt velocity to zero
@@ -172,18 +184,15 @@ mainLoop:
 	JC LT, movingDown
 	JC GT, movingUp
 	endTiltCalc:
-	//AAP: Accumulator to axis parameter
-	//AAP <parameter number>, <motor number>
+	AGP tiltVel, 2
 	AAP targetSpeed, tiltMotor// set target speed
-	// rpm = value/2047*maxSpeedRpm
 	endTilt:
-
 
 
 	//*******PAN*********
 	GGP panOffset, 2
 	CALCX LOAD
-	GIO panSignal, 1
+	GGP panSignalVar, 2
 	CALCX SUB
 	CALC MUL, -1
 
@@ -199,6 +208,9 @@ mainLoop:
 	JC GT, movingRight
 	
 	endPanCalc:
+
+
+	AGP panVel, 2
 	AAP targetSpeed, panMotor
 	endPan:
 	
@@ -209,12 +221,14 @@ tiltStop:
 	GAP actualSpeed, tiltMotor
 	JC ZE, endTilt
 	SAP targetSpeed, tiltMotor, 0// set target speed
+	SGP tiltVel, 2, 0
 JA endTilt
 
 panStop:
 	GAP actualSpeed, panMotor
 	JC ZE, endPan
 	SAP targetSpeed, panMotor, 0
+	SGP panVel, 2, 0
 JA endPan
 
 joystickOff:
@@ -232,6 +246,7 @@ movingUp:
 	COMP joystickOffDelta
 	JC GE, joystickOff
 	CSUB rectify
+	AGP temp, 2
 	CALC LOAD, enforceLimits
 	JC ZE, endIf7
 		GAP actualPos, tiltMotor
@@ -246,6 +261,7 @@ movingDown:
 	COMP joystickOffDelta
 	JC GE, joystickOff
 	CSUB rectify
+	AGP temp, 2
 	CALC LOAD, enforceLimits
 	JC ZE, endIf6
 		GAP actualPos, tiltMotor
