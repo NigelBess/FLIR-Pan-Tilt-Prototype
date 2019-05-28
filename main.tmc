@@ -18,6 +18,7 @@ encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 300
 standByCurrentValue = 0
 encoderModeValue = 13
+scaledCountsPerSpin = 1000000
 
 
 //**********DONT CHANGE THESE************
@@ -135,6 +136,7 @@ CSUB loadEncoderValue
 
 
 mainLoop:
+	CSUB modEncoder
 	GAP encoderPos, tiltMotor
 	AGP tiltEnc, 2
 	STGP tiltEnc, 2
@@ -294,4 +296,10 @@ loadEncoderValue:
 	AAP encoderPos, tiltMotor
 	AAP actualPos, tiltMotor
 	WAIT TICKS, tiltMotor, 100
+RSUB
+
+modEncoder:
+	GAP encoderPos, tiltMotor
+	CALC MOD, scaledCountsPerSpin
+	AAP encoderPos, tiltMotor
 RSUB
