@@ -178,12 +178,12 @@ mainLoop:
 	AGP panSignalVar, 2
  	
 	//if both signals are zero, the joystick must be off
-	COMP joystickOffMaxVoltage
-	JC GE, endIf11
-		GGP tiltSignalVar, 2
-		JC GE, endIf11
-		JA joystickOff
-	endIf11:
+	//COMP joystickOffMaxVoltage
+	//JC GE, endIf11
+	//	GGP tiltSignalVar, 2
+	//	JC GE, endIf11
+	//	JA joystickOff
+	//endIf11:
 	
 	
 	//*******TILT********
@@ -269,8 +269,8 @@ joystickOff:
 JA mainLoop
 
 movingUp:
-	COMP joystickOffDelta
-	JC GE, joystickOff
+	//COMP joystickOffDelta
+	//JC GE, joystickOff
 	CSUB rectify
 	AGP temp, 2
 	CALC LOAD, enforceLimits
@@ -284,8 +284,8 @@ JA endTiltCalc
 
 movingDown:
 	CALC MUL, -1
-	COMP joystickOffDelta
-	JC GE, joystickOff
+	//COMP joystickOffDelta
+	//JC GE, joystickOff
 	CSUB rectify
 	AGP temp, 2
 	CALC LOAD, enforceLimits
@@ -299,15 +299,15 @@ movingDown:
 JA endTiltCalc
 
 movingRight:
-	COMP joystickOffDelta
-	JC GE, joystickOff
+	//COMP joystickOffDelta
+	//JC GE, joystickOff
 	CSUB rectify
 JA endPanCalc
 
 movingLeft:
 	CALC MUL, -1
-	COMP joystickOffDelta
-	JC GE, joystickOff
+	//COMP joystickOffDelta
+	//JC GE, joystickOff
 	CSUB rectify
 	CALC MUL, -1
 JA endPanCalc
