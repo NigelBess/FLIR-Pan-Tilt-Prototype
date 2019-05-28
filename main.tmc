@@ -8,9 +8,9 @@ panSignal = 0
 //User values
 threshold = 100//min speed reading to cause motor rotation
 maxSpeed = 800
-tiltMaxExpectedVoltageDelta = 850
-panMaxExpectedVoltageDelta = 850
 joystickOffMaxVoltage = 40
+joystickOffDelta = 1300
+maxExpectedVoltageDelta = 850
 maxTiltUp = 120000
 maxTiltDown = -230000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
@@ -148,10 +148,8 @@ mainLoop:
 	//GIO <port number>, <bank number>
 	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
 	//analog input: 0 to 10v volts correstponds to 0-4095
-	COMP joystickOffMaxVoltage
-	JC LE, joystickOff
 	//Tilt signal is zeroed at ~1730
-	CALCX SUB
+	CALCX SUB	
 	CALC MUL, -1//tilt axis voltage is reversed
 	//CALC DIV, 2//analog signal goes has max value 4095. Now 2047 to match speed param size
 	//CALC MUL, 2//joystick has max output 5v, but signal takes 10v
@@ -167,10 +165,6 @@ mainLoop:
 	//GGP: Get global parameter
 	//GGP <parameter number>, <bank>
 	GGP tiltVel, 2//restore old value to accumulator
-	
-	//convert from reading to speed
-	CALC MUL, maxSpeed
-	CALC DIV, tiltMaxExpectedVoltageDelta
 
 	COMP 0
 	JC LT, movingDown
@@ -188,17 +182,16 @@ mainLoop:
 	GGP panOffset, 2
 	CALCX LOAD
 	GIO panSignal, 1
-	COMP joystickOffMaxVoltage
-	JC LE, joystickOff
 	CALCX SUB
+	CALC MUL, -1
+
 	AGP panVel, 2
 	CALC DIV, threshold
 	JC ZE, panStop
 	GGP panVel, 2//restore old value to accumulator
 
-	CALC MUL, maxSpeed
-	CALC DIV, panMaxExpectedVoltageDelta
-	CALC MUL, -1
+	
+	
 	COMP 0
 	JC LT, movingLeft
 	JC GT, movingRight
@@ -223,7 +216,6 @@ panStop:
 JA endPan
 
 joystickOff:
-	CSUB zeroEncoder
 	GAP actualSpeed, tiltMotor
 	JC ZE, endIf4
 		SAP targetSpeed, tiltMotor, 0// set target speed
@@ -235,6 +227,8 @@ joystickOff:
 JA mainLoop
 
 movingUp:
+	COMP joystickOffDelta
+	JC GE, joystickOff
 	CSUB rectify
 	CALC LOAD, enforceLimits
 	JC ZE, endIf7
@@ -247,6 +241,8 @@ JA endTiltCalc
 
 movingDown:
 	CALC MUL, -1
+	COMP joystickOffDelta
+	JC GE, joystickOff
 	CSUB rectify
 	CALC LOAD, enforceLimits
 	JC ZE, endIf6
@@ -259,21 +255,27 @@ movingDown:
 JA endTiltCalc
 
 movingRight:
+	COMP joystickOffDelta
+	JC GE, joystickOff
 	CSUB rectify
 JA endPanCalc
 
 movingLeft:
 	CALC MUL, -1
+	COMP joystickOffDelta
+	JC GE, joystickOff
 	CSUB rectify
 	CALC MUL, -1
 JA endPanCalc
 
 rectify:
+	CALC MUL, maxSpeed
+	CALC DIV, maxExpectedVoltageDelta
 	CALC SUB, threshold
 	COMP maxSpeed
 	JC LT, endIF5
 		CALC LOAD, maxSpeed
-	endIF5:
+	endIF5:	
 	AGP temp, 2
 RSUB
 
@@ -292,8 +294,4 @@ loadEncoderValue:
 	AAP encoderPos, tiltMotor
 	AAP actualPos, tiltMotor
 	WAIT TICKS, tiltMotor, 100
-RSUB
-
-zeroEncoder:
-	SAP encoderPos, tiltMotor, 0
 RSUB
