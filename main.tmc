@@ -9,13 +9,13 @@ panSignal = 0
 threshold = 100//min speed reading to cause motor rotation
 maxSpeed = 800
 joystickOffMaxVoltage = 40
-joystickOffDelta = 1200
+joystickOffDelta = 1000
 maxExpectedVoltageDelta = 850
 maxTiltUp = 160000
 maxTiltDown = -170000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
-maxAccelValue = 600
+maxAccelValue = 300
 standByCurrentValue = 0
 encoderModeValue = 13
 scaledCountsPerSpin = 1000000
@@ -60,6 +60,8 @@ panOffset = 5
 backUpTiltEnc = 6
 panSignalVar = 7
 tiltSignalVar = 8
+tiltPos = 9
+backUpTiltPos = 10
 
 
 
@@ -164,7 +166,11 @@ mainLoop:
 	AGP backUpTiltEnc, 2
 	STGP tiltEnc, 2
 	STGP backUpTiltEnc, 2
-
+	GAP actualPos, tiltMotor
+	AGP tiltPos, 2
+	STGP tiltPos, 2
+	AGP backUpTiltPos, 2
+	STGP backUpTiltPos, 2
 	//get signals
 	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
 	AGP tiltSignalVar, 2
@@ -340,7 +346,22 @@ loadEncoderValue:
 		RSGP backUpTiltEnc, 2
 		GGP backUpTiltEnc, 2
 	useOld:
-	AAP actualPos, tiltMotor
+	AAP encoderPos, tiltMotor
+
+	RSGP tiltPos, 2
+	GGP tiltPos, 2
+	//check if value is corrupted
+	COMP maxExpectedEncoderValue
+	JC GE, useBackup2
+	CALC MUL, -1
+	JC GE, useBackUp2
+	CALC MUL, -1
+	JA useOld2
+	useBackup2:
+		RSGP backUpTiltPos, 2
+		GGP backUpTiltPos, 2
+	useOld2:
+	AAP encoderPos, tiltMotor
 	WAIT TICKS, tiltMotor, 100
 RSUB
 

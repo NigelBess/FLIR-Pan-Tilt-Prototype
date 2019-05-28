@@ -3,6 +3,10 @@ tiltMotor = 1
 
 //user vars
 tiltEnc = 3
+backUpTiltEnc = 6
 
 SGP tiltEnc, 2, 0
 STGP tiltEnc, 2
+
+SGP backUpTiltEnc, 2, 0
+STGP backUpTiltEnc, 2
