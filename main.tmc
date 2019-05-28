@@ -11,13 +11,13 @@ maxSpeed = 800
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1200
 maxExpectedVoltageDelta = 850
-maxTiltUp = 300000
-maxTiltDown = -15000
+maxTiltUp = 110000
+maxTiltDown = -240000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
-maxAccelValue = 300
+maxAccelValue = 600
 standByCurrentValue = 0
-encoderModeValue = 5
+encoderModeValue = 1
 scaledCountsPerSpin = 1000000
 
 
@@ -137,7 +137,7 @@ CSUB loadEncoderValue
 
 mainLoop:
 	CSUB modEncoder
-	GAP encoderPos, tiltMotor
+	GAP actualPos, tiltMotor
 	AGP tiltEnc, 2
 	STGP tiltEnc, 2
 
@@ -234,7 +234,7 @@ movingUp:
 	CSUB rectify
 	CALC LOAD, enforceLimits
 	JC ZE, endIf7
-		GAP encoderPos, tiltMotor
+		GAP actualPos, tiltMotor
 		COMP maxTiltUp
 		JC GE, tiltStop
 	endIf7:
@@ -248,7 +248,7 @@ movingDown:
 	CSUB rectify
 	CALC LOAD, enforceLimits
 	JC ZE, endIf6
-		GAP encoderPos, tiltMotor
+		GAP actualPos, tiltMotor
 		COMP maxTiltDown
 		JC LE, tiltStop
 	endIf6:
