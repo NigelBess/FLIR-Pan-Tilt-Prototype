@@ -8,16 +8,16 @@ panSignal = 0
 //User values
 threshold = 100//min speed reading to cause motor rotation
 maxSpeed = 800
-joystickOffLowerValue = 1600
 tiltMaxExpectedVoltageDelta = 850
 panMaxExpectedVoltageDelta = 850
 joystickOffMaxVoltage = 40
-maxTiltUp = 100000
-maxTiltDown = -210000
+maxTiltUp = 120000
+maxTiltDown = -230000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 300
 standByCurrentValue = 0
+encoderModeValue = 1
 
 
 //**********DONT CHANGE THESE************
@@ -90,7 +90,7 @@ SAP rampMode, tiltMotor, 2//velocity mode
 //binary mode factor: 65536
 //deciaml mode factor: 10000
 SAP encoderPrescaler, tiltMotor, 4674113//713213
-CALC LOAD, 1
+CALC LOAD, encoderModeValue
 AAP encoderMode, tiltMotor
 
 
@@ -148,7 +148,8 @@ mainLoop:
 	//GIO <port number>, <bank number>
 	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
 	//analog input: 0 to 10v volts correstponds to 0-4095
-
+	COMP joystickOffMaxVoltage
+	JC LE, joystickOff
 	//Tilt signal is zeroed at ~1730
 	CALCX SUB
 	CALC MUL, -1//tilt axis voltage is reversed
@@ -187,6 +188,8 @@ mainLoop:
 	GGP panOffset, 2
 	CALCX LOAD
 	GIO panSignal, 1
+	COMP joystickOffMaxVoltage
+	JC LE, joystickOff
 	CALCX SUB
 	AGP panVel, 2
 	CALC DIV, threshold
@@ -220,6 +223,7 @@ panStop:
 JA endPan
 
 joystickOff:
+	CSUB zeroEncoder
 	GAP actualSpeed, tiltMotor
 	JC ZE, endIf4
 		SAP targetSpeed, tiltMotor, 0// set target speed
@@ -231,9 +235,6 @@ joystickOff:
 JA mainLoop
 
 movingUp:
-	//check if joystick is off
-	COMP joystickOffLowerValue
-	JC GE, joystickOff
 	CSUB rectify
 	CALC LOAD, enforceLimits
 	JC ZE, endIf7
@@ -246,9 +247,6 @@ JA endTiltCalc
 
 movingDown:
 	CALC MUL, -1
-	//check if joystick is off
-	COMP joystickOffLowerValue
-	JC GE, joystickOff
 	CSUB rectify
 	CALC LOAD, enforceLimits
 	JC ZE, endIf6
@@ -289,10 +287,13 @@ zeroJoystick:
 RSUB
 
 loadEncoderValue:
-	//load saved value of encoder
-	WAIT TICKS, tiltMotor, 100
 	RSGP tiltEnc, 2
 	GGP tiltEnc, 2
 	AAP encoderPos, tiltMotor
 	AAP actualPos, tiltMotor
+	WAIT TICKS, tiltMotor, 100
+RSUB
+
+zeroEncoder:
+	SAP encoderPos, tiltMotor, 0
 RSUB
