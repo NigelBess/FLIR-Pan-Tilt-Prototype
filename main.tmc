@@ -11,14 +11,19 @@ maxSpeed = 800
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1200
 maxExpectedVoltageDelta = 850
-maxTiltUp = 110000
-maxTiltDown = -240000
+maxTiltUp = 160000
+maxTiltDown = -170000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 600
 standByCurrentValue = 0
-encoderModeValue = 1
+encoderModeValue = 13
 scaledCountsPerSpin = 1000000
+maxExpectedEncoderValue = 300000
+
+//these are the range in which we can trust the encoder readings. used to calibrate actual position
+minEncoderValue = 100000
+maxEncoderValue = 170000
 
 
 //**********DONT CHANGE THESE************
@@ -52,8 +57,10 @@ tiltOffset = 2
 tiltEnc = 3
 temp = 4
 panOffset = 5
+backUpTiltEnc = 6
 panSignalVar = 7
 tiltSignalVar = 8
+
 
 
 
@@ -138,12 +145,25 @@ CSUB zeroJoystick
 
 CSUB loadEncoderValue
 
+GAP encoderPos, tiltMotor
+AAP actualPos, tiltMotor
 
 mainLoop:
+	//calibrate actual position
+	GAP encoderPos, tiltMotor
+	COMP minEncoderValue
+	JC LE, endCalibrate
+	COMP maxEncoderValue
+	JC GE, endCalibrate
+	AAP actualPos, tiltMotor
+	endCalibrate:
+
 	//save position to permanent memory
-	GAP actualPos, tiltMotor
+	GAP encoderPos, tiltMotor
 	AGP tiltEnc, 2
+	AGP backUpTiltEnc, 2
 	STGP tiltEnc, 2
+	STGP backUpTiltEnc, 2
 
 	//get signals
 	GIO tiltSignal, 1//write analog input to accumulator. the 1 is for analog signals
@@ -309,7 +329,17 @@ RSUB
 loadEncoderValue:
 	RSGP tiltEnc, 2
 	GGP tiltEnc, 2
-	AAP encoderPos, tiltMotor
+	//check if value is corrupted
+	COMP maxExpectedEncoderValue
+	JC GE, useBackup
+	CALC MUL, -1
+	JC GE, useBackUp
+	CALC MUL, -1
+	JA useOld	
+	useBackup:
+		RSGP backUpTiltEnc, 2
+		GGP backUpTiltEnc, 2
+	useOld:
 	AAP actualPos, tiltMotor
 	WAIT TICKS, tiltMotor, 100
 RSUB
