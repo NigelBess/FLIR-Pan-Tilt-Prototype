@@ -13,22 +13,28 @@ t2 = 10000
 p3 = -10000
 t3 = 0
 
+//dance Params
+timeBetweenMoves = 50//ticks
+initialPause =  100//ticks
+
 //User values
 threshold = 100//min speed reading to cause motor rotation
 maxSpeed = 750
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1000
 maxExpectedVoltageDelta = 600
-maxTiltUp = 40000
-maxTiltDown = -280000
+maxTiltUp = 0
+maxTiltDown = -320000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
-maxAccelValue = 500
+maxAccelValue = 300
 standByCurrentValue = 0
 encoderModeValue = 13
 scaledCountsPerSpin = 1000000
 maxExpectedEncoderValue = 300000
 stallGuardThresholdValue = 2
+timeOutTicks = 200
+posModeSpeedValue = 650
 
 //these are the range in which we can trust the encoder readings. used to calibrate actual position
 minEncoderValue = -40000//100000
@@ -43,6 +49,7 @@ pulseDiv = 154
 actualSpeed = 3
 actualPos = 1
 targetSpeed = 2
+targetPos = 0
 maxAccel = 5
 rampMode = 138
 standByCurrent = 7
@@ -54,6 +61,7 @@ stallGuardSpeed = 181
 encoderPos = 209
 encoderMode = 201
 encoderPrescaler = 210
+posModeSpeed = 4
 //**********DONT CHANGE THESE************
 
 //other
@@ -103,8 +111,8 @@ SAP microStepRes,tiltMotor, 6//mictrostep resolution (f) 2^value
 SAP pulseDiv, tiltMotor, 0//pulse_div
 
 SAP actualSpeed, tiltMotor, 0//actual speed 
-SAP maxAccel, tiltMotor, 300//max accel
-
+SAP maxAccel, tiltMotor, maxAccelValue//max accel
+SAP posModeSpeed, tiltMotor, posModeSpeedValue
 
 //motor steps per rev: 200
 //@ 64 microstep: 12800 motor res
@@ -128,6 +136,7 @@ SAP microStepRes,panMotor, 6//mictrostep resolution (f) 2^value
 SAP pulseDiv, panMotor, 0//pulse_div
 SAP actualSpeed, panMotor, 0//actual speed 
 SAP maxAccel, panMotor, maxAccelValue//max accel
+SAP posModeSpeed, panMotor, posModeSpeedValue
 
 SAP encoderPrescaler, panMotor, encoderPrescaleValue
 CALC LOAD, encoderModeValue
@@ -164,7 +173,7 @@ AAP actualPos, tiltMotor
 startMain:
 	SAP rampMode, panMotor, 2//velocity mode
 	SAP rampMode, tiltMotor, 2//velocity mode
-
+	CSUB stopAll
 mainLoop:
 	//calibrate actual position
 	GAP encoderPos, tiltMotor
@@ -264,15 +273,38 @@ mainLoop:
 JA mainLoop
 
 startDance:
+	
 	GAP actualPos, tiltMotor
 	AGP tiltZero, 2
 	GAP actualPos, panMotor
 	AGP panZero, 2
+	SAP rampMode, tiltMotor, 0
+	SAP rampMode, panMotor, 0
+	SAP targetSpeed, tiltMotor, posModeSpeedValue
+	SAP targetSpeed, panMotor, posModeSpeedValue
 danceLoop:
-	GGP, panZero, 2
+	//check if joystick is on
+	GIO joystickPower, 0
+	JC NZ, startMain
+
+	GGP panZero, 2
 	CALC ADD, p1
-	GGP, tiltZero, 2
-	CALC ADD t1
+	AAP targetPos, panMotor
+	GGP tiltZero, 2
+	CALC ADD, t1
+	AAP targetPos, tiltMotor
+
+	WAIT POS, panMotor, timeOutTicks
+	WAIT POS, tiltMotor, timeOutTicks
+
+	GGP panZero, 2
+	CALC ADD, p2
+	AAP targetPos, panMotor
+	GGP tiltZero, 2
+	CALC ADD, t2
+	AAP targetPos, tiltMotor
+	WAIT POS, panMotor, timeOutTicks
+	WAIT POS, tiltMotor, timeOutTicks
 
 JA danceLoop
 
@@ -291,6 +323,10 @@ panStop:
 JA endPan
 
 joystickOff:
+	CSUB stopAll
+JA startDance
+
+stopALL:
 	GAP actualSpeed, tiltMotor
 	JC ZE, endIf4
 		SAP targetSpeed, tiltMotor, 0// set target speed
@@ -299,7 +335,7 @@ joystickOff:
 	JC ZE, endIf9
 		SAP targetSpeed, panMotor, 0// set target speed
 	endIf9:
-JA mainLoop
+RSUB
 
 movingUp:
 	//COMP joystickOffDelta
