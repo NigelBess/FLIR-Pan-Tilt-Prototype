@@ -36,6 +36,7 @@ stallGuardThresholdValue = 2
 timeOutTicks = 200
 posModeSpeedValue = 50
 joystickZeroTime = 5
+maxCurrentValue = 255
 
 //these are the range in which we can trust the encoder readings. used to calibrate actual position
 minEncoderValue = -40000//100000
@@ -93,7 +94,7 @@ Start:
 //********TILT AXIS PARAMS********************
 //SAP: set axis parameter
 // SAP <parameter number>, <axis>, <value>
-SAP maxCurrent, tiltMotor, 128//max current. (value/255)*inputCurrent
+SAP maxCurrent, tiltMotor, maxCurrentValue//max current. (value/255)*inputCurrent
 SAP standByCurrent, tiltMotor, standByCurrentValue
 SAP stallGuardFilter, tiltMotor, 0
 SAP stallGuardThreshold, tiltMotor, stallGuardThresholdValue
@@ -130,7 +131,7 @@ AAP encoderMode, tiltMotor
 
 
 //********PAN AXIS PARAMS********************
-SAP maxCurrent, panMotor, 128//max current. (value/255)*inputCurrent
+SAP maxCurrent, panMotor, maxCurrentValue//max current. (value/255)*inputCurrent
 SAP standByCurrent, panMotor, standByCurrentValue
 SAP stallGuardFilter, panMotor, 0
 SAP stallGuardThreshold, panMotor, stallGuardThresholdValue
