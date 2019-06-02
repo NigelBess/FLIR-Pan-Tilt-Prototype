@@ -5,6 +5,14 @@ tiltSignal = 4 // 4: analog io 1
 panSignal = 0
 joystickPower = 1
 
+//dance positions
+p1 = 10000
+t1 =  0
+p2 = 0
+t2 = 10000
+p3 = -10000
+t3 = 0
+
 //User values
 threshold = 100//min speed reading to cause motor rotation
 maxSpeed = 750
@@ -63,6 +71,8 @@ panSignalVar = 7
 tiltSignalVar = 8
 tiltPos = 9
 backUpTiltPos = 10
+tiltZero = 11//used to zero dance
+panZero = 12//used to zero dance
 
 
 
@@ -94,7 +104,7 @@ SAP pulseDiv, tiltMotor, 0//pulse_div
 
 SAP actualSpeed, tiltMotor, 0//actual speed 
 SAP maxAccel, tiltMotor, 300//max accel
-SAP rampMode, tiltMotor, 2//velocity mode
+
 
 //motor steps per rev: 200
 //@ 64 microstep: 12800 motor res
@@ -118,9 +128,9 @@ SAP microStepRes,panMotor, 6//mictrostep resolution (f) 2^value
 SAP pulseDiv, panMotor, 0//pulse_div
 SAP actualSpeed, panMotor, 0//actual speed 
 SAP maxAccel, panMotor, maxAccelValue//max accel
-SAP rampMode, panMotor, 2//velocity mode
+
 SAP encoderPrescaler, panMotor, encoderPrescaleValue
-CALC LOAD, 1
+CALC LOAD, encoderModeValue
 AAP encoderMode, panMotor
 
 
@@ -150,6 +160,10 @@ CSUB loadEncoderValue
 
 GAP encoderPos, tiltMotor
 AAP actualPos, tiltMotor
+
+startMain:
+	SAP rampMode, panMotor, 2//velocity mode
+	SAP rampMode, tiltMotor, 2//velocity mode
 
 mainLoop:
 	//calibrate actual position
@@ -248,6 +262,19 @@ mainLoop:
 	
 //JA: jump always
 JA mainLoop
+
+startDance:
+	GAP actualPos, tiltMotor
+	AGP tiltZero, 2
+	GAP actualPos, panMotor
+	AGP panZero, 2
+danceLoop:
+	GGP, panZero, 2
+	CALC ADD, p1
+	GGP, tiltZero, 2
+	CALC ADD t1
+
+JA danceLoop
 
 tiltStop:
 	GAP actualSpeed, tiltMotor
