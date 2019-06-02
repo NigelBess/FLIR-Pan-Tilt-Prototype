@@ -7,15 +7,15 @@ panSignal = 0
 
 //User values
 threshold = 100//min speed reading to cause motor rotation
-maxSpeed = 800
+maxSpeed = 1000
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1000
-maxExpectedVoltageDelta = 850
+maxExpectedVoltageDelta = 600
 maxTiltUp = 40000
 maxTiltDown = -280000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
-maxAccelValue = 300
+maxAccelValue = 100
 standByCurrentValue = 0
 encoderModeValue = 13
 scaledCountsPerSpin = 1000000
