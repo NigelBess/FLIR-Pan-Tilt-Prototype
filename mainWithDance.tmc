@@ -34,7 +34,8 @@ scaledCountsPerSpin = 1000000
 maxExpectedEncoderValue = 300000
 stallGuardThresholdValue = 2
 timeOutTicks = 200
-posModeSpeedValue = 650
+posModeSpeedValue = 50
+joystickZeroTime = 5
 
 //these are the range in which we can trust the encoder readings. used to calibrate actual position
 minEncoderValue = -40000//100000
@@ -81,6 +82,8 @@ tiltPos = 9
 backUpTiltPos = 10
 tiltZero = 11//used to zero dance
 panZero = 12//used to zero dance
+tiltTarget = 13
+panTarget = 14
 
 
 
@@ -280,33 +283,69 @@ startDance:
 	AGP panZero, 2
 	SAP rampMode, tiltMotor, 0
 	SAP rampMode, panMotor, 0
+	CSUB stopAll
+	WAIT TICKS, tiltMotor, initialPause
 	SAP targetSpeed, tiltMotor, posModeSpeedValue
 	SAP targetSpeed, panMotor, posModeSpeedValue
+	
 danceLoop:
 	//check if joystick is on
 	GIO joystickPower, 0
-	JC NZ, startMain
+	JC NZ, returnToMain
 
-	GGP panZero, 2
-	CALC ADD, p1
-	AAP targetPos, panMotor
-	GGP tiltZero, 2
-	CALC ADD, t1
-	AAP targetPos, tiltMotor
+	CALC LOAD, p1
+	AGP panTarget, 2
+	CALC LOAD, t1
+	AGP tiltTarget, 2
+	CSUB goToTarget
+	
+	//check if joystick is on
+	GIO joystickPower, 0
+	JC NZ, returnToMain
+	WAIT TICKS, tiltMotor, timeBetweenMoves
 
-	WAIT POS, panMotor, timeOutTicks
-	WAIT POS, tiltMotor, timeOutTicks
+	CALC LOAD, p2
+	AGP panTarget, 2
+	CALC LOAD, t2
+	AGP tiltTarget, 2
+	CSUB goToTarget
 
-	GGP panZero, 2
-	CALC ADD, p2
-	AAP targetPos, panMotor
-	GGP tiltZero, 2
-	CALC ADD, t2
-	AAP targetPos, tiltMotor
-	WAIT POS, panMotor, timeOutTicks
-	WAIT POS, tiltMotor, timeOutTicks
+	//check if joystick is on
+	GIO joystickPower, 0
+	JC NZ, returnToMain
+	WAIT TICKS, tiltMotor, timeBetweenMoves
+
+	CALC LOAD, p3
+	AGP panTarget, 2
+	CALC LOAD, t3
+	AGP tiltTarget, 2
+	CSUB goToTarget
+
+	//check if joystick is on
+	GIO joystickPower, 0
+	JC NZ, returnToMain
+	WAIT TICKS, tiltMotor, timeBetweenMoves
 
 JA danceLoop
+
+goToTarget:
+	GGP panZero, 2
+	CALCX LOAD
+	GGP panTarget, 2
+	CALCX ADD
+	AAP targetPos, panMotor
+	GGP tiltZero, 2
+	CALCX LOAD
+	GGP tiltTarget, 2
+	CALCX ADD
+	AAP targetPos, tiltMotor
+	WAIT POS, panMotor, timeOutTicks
+	WAIT POS, tiltMotor, timeOutTicks
+RSUB
+
+returnToMain:
+	CSUB zeroJoystick
+JA startMain
 
 tiltStop:
 	GAP actualSpeed, tiltMotor
@@ -336,6 +375,7 @@ stopALL:
 		SAP targetSpeed, panMotor, 0// set target speed
 	endIf9:
 RSUB
+
 
 movingUp:
 	//COMP joystickOffDelta
@@ -393,7 +433,7 @@ rectify:
 RSUB
 
 zeroJoystick:
-	WAIT TICKS, tiltMotor, 50
+	WAIT TICKS, tiltMotor, joystickZeroTime
 //save tiltOffset (zero voltage of joystick)
 	GIO tiltSignal, 1
 	AGP tiltOffset, 2
