@@ -11,8 +11,8 @@ maxSpeed = 800
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1000
 maxExpectedVoltageDelta = 850
-maxTiltUp = 160000
-maxTiltDown = -170000
+maxTiltUp = 40000
+maxTiltDown = -280000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 300
@@ -22,8 +22,8 @@ scaledCountsPerSpin = 1000000
 maxExpectedEncoderValue = 300000
 
 //these are the range in which we can trust the encoder readings. used to calibrate actual position
-minEncoderValue = 100000
-maxEncoderValue = 170000
+minEncoderValue = -40000//100000
+maxEncoderValue = 40000
 
 
 //**********DONT CHANGE THESE************
