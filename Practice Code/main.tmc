@@ -5,39 +5,22 @@ tiltSignal = 4 // 4: analog io 1
 panSignal = 0
 joystickPower = 1
 
-//dance positions
-p1 = 500
-t1 =  0
-p2 = 0
-t2 = 886
-p3 = -500
-t3 = 0
-
-//dance Params
-timeBetweenMoves = 50//ticks
-initialPause =  100//ticks
-
 //User values
 threshold = 100//min speed reading to cause motor rotation
-maxSpeedHigh = 750
-maxSpeedLow = 50
+maxSpeed = 750
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1000
 maxExpectedVoltageDelta = 600
-maxTiltUp = 120000
-maxTiltDown = -200000
+maxTiltUp = 40000
+maxTiltDown = -280000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
-maxAccelValue = 300
+maxAccelValue = 500
 standByCurrentValue = 0
 encoderModeValue = 13
 scaledCountsPerSpin = 1000000
 maxExpectedEncoderValue = 300000
 stallGuardThresholdValue = 2
-timeOutTicks = 200
-posModeSpeedValue = 5
-joystickZeroTime = 5
-maxCurrentValue = 136
 
 //these are the range in which we can trust the encoder readings. used to calibrate actual position
 minEncoderValue = -40000//100000
@@ -52,7 +35,6 @@ pulseDiv = 154
 actualSpeed = 3
 actualPos = 1
 targetSpeed = 2
-targetPos = 0
 maxAccel = 5
 rampMode = 138
 standByCurrent = 7
@@ -64,7 +46,6 @@ stallGuardSpeed = 181
 encoderPos = 209
 encoderMode = 201
 encoderPrescaler = 210
-posModeSpeed = 4
 //**********DONT CHANGE THESE************
 
 //other
@@ -82,12 +63,6 @@ panSignalVar = 7
 tiltSignalVar = 8
 tiltPos = 9
 backUpTiltPos = 10
-tiltZero = 11//used to zero dance
-panZero = 12//used to zero dance
-tiltTarget = 13
-panTarget = 14
-currentMode = 15
-maxSpeed = 16
 
 
 
@@ -97,7 +72,7 @@ Start:
 //********TILT AXIS PARAMS********************
 //SAP: set axis parameter
 // SAP <parameter number>, <axis>, <value>
-SAP maxCurrent, tiltMotor, maxCurrentValue//max current. (value/255)*inputCurrent
+SAP maxCurrent, tiltMotor, 128//max current. (value/255)*inputCurrent
 SAP standByCurrent, tiltMotor, standByCurrentValue
 SAP stallGuardFilter, tiltMotor, 0
 SAP stallGuardThreshold, tiltMotor, stallGuardThresholdValue
@@ -118,8 +93,8 @@ SAP microStepRes,tiltMotor, 6//mictrostep resolution (f) 2^value
 SAP pulseDiv, tiltMotor, 0//pulse_div
 
 SAP actualSpeed, tiltMotor, 0//actual speed 
-SAP maxAccel, tiltMotor, maxAccelValue//max accel
-SAP posModeSpeed, tiltMotor, posModeSpeedValue
+SAP maxAccel, tiltMotor, 300//max accel
+SAP rampMode, tiltMotor, 2//velocity mode
 
 //motor steps per rev: 200
 //@ 64 microstep: 12800 motor res
@@ -134,7 +109,7 @@ AAP encoderMode, tiltMotor
 
 
 //********PAN AXIS PARAMS********************
-SAP maxCurrent, panMotor, maxCurrentValue//max current. (value/255)*inputCurrent
+SAP maxCurrent, panMotor, 128//max current. (value/255)*inputCurrent
 SAP standByCurrent, panMotor, standByCurrentValue
 SAP stallGuardFilter, panMotor, 0
 SAP stallGuardThreshold, panMotor, stallGuardThresholdValue
@@ -143,10 +118,9 @@ SAP microStepRes,panMotor, 6//mictrostep resolution (f) 2^value
 SAP pulseDiv, panMotor, 0//pulse_div
 SAP actualSpeed, panMotor, 0//actual speed 
 SAP maxAccel, panMotor, maxAccelValue//max accel
-SAP posModeSpeed, panMotor, posModeSpeedValue
-
+SAP rampMode, panMotor, 2//velocity mode
 SAP encoderPrescaler, panMotor, encoderPrescaleValue
-CALC LOAD, encoderModeValue
+CALC LOAD, 1
 AAP encoderMode, panMotor
 
 
@@ -160,8 +134,6 @@ SGP panOffset, 2, 0
 SGP panVel, 2, 0
 SGP panSignalVar, 2, 0
 SGP tiltSignalVar, 2, 0
-SGP currentmOde, 2, 0
-
 
 
 
@@ -179,11 +151,6 @@ CSUB loadEncoderValue
 GAP encoderPos, tiltMotor
 AAP actualPos, tiltMotor
 
-startMain:
-	CSUB toggleSpeed
-	SAP rampMode, panMotor, 2//velocity mode
-	SAP rampMode, tiltMotor, 2//velocity mode
-	CSUB stopAll
 mainLoop:
 	//calibrate actual position
 	GAP encoderPos, tiltMotor
@@ -282,78 +249,6 @@ mainLoop:
 //JA: jump always
 JA mainLoop
 
-startDance:
-	
-	GAP actualPos, tiltMotor
-	AGP tiltZero, 2
-	GAP actualPos, panMotor
-	AGP panZero, 2
-	SAP rampMode, tiltMotor, 0
-	SAP rampMode, panMotor, 0
-	CSUB stopAll
-	WAIT TICKS, tiltMotor, initialPause
-	SAP targetSpeed, tiltMotor, posModeSpeedValue
-	SAP targetSpeed, panMotor, posModeSpeedValue
-	
-danceLoop:
-	//check if joystick is on
-	GIO joystickPower, 0
-	JC NZ, returnToMain
-
-	CALC LOAD, p1
-	AGP panTarget, 2
-	CALC LOAD, t1
-	AGP tiltTarget, 2
-	CSUB goToTarget
-	
-	//check if joystick is on
-	GIO joystickPower, 0
-	JC NZ, returnToMain
-	WAIT TICKS, tiltMotor, timeBetweenMoves
-
-	CALC LOAD, p2
-	AGP panTarget, 2
-	CALC LOAD, t2
-	AGP tiltTarget, 2
-	CSUB goToTarget
-
-	//check if joystick is on
-	GIO joystickPower, 0
-	JC NZ, returnToMain
-	WAIT TICKS, tiltMotor, timeBetweenMoves
-
-	CALC LOAD, p3
-	AGP panTarget, 2
-	CALC LOAD, t3
-	AGP tiltTarget, 2
-	CSUB goToTarget
-
-	//check if joystick is on
-	GIO joystickPower, 0
-	JC NZ, returnToMain
-	WAIT TICKS, tiltMotor, timeBetweenMoves
-
-JA danceLoop
-
-goToTarget:
-	GGP panZero, 2
-	CALCX LOAD
-	GGP panTarget, 2
-	CALCX ADD
-	AAP targetPos, panMotor
-	GGP tiltZero, 2
-	CALCX LOAD
-	GGP tiltTarget, 2
-	CALCX ADD
-	AAP targetPos, tiltMotor
-	WAIT POS, panMotor, timeOutTicks
-	WAIT POS, tiltMotor, timeOutTicks
-RSUB
-
-returnToMain:
-	CSUB zeroJoystick
-JA startMain
-
 tiltStop:
 	GAP actualSpeed, tiltMotor
 	JC ZE, endTilt
@@ -369,10 +264,6 @@ panStop:
 JA endPan
 
 joystickOff:
-	CSUB stopAll
-JA startDance
-
-stopALL:
 	GAP actualSpeed, tiltMotor
 	JC ZE, endIf4
 		SAP targetSpeed, tiltMotor, 0// set target speed
@@ -381,8 +272,7 @@ stopALL:
 	JC ZE, endIf9
 		SAP targetSpeed, panMotor, 0// set target speed
 	endIf9:
-RSUB
-
+JA mainLoop
 
 movingUp:
 	//COMP joystickOffDelta
@@ -429,37 +319,18 @@ movingLeft:
 JA endPanCalc
 
 rectify:
-	//absolute value of voltage reading should be in accu
-	CALC SUB, threshold
-	COMP maxExpectedVoltageDelta
-	JC LE, endIf5
-		GGP maxSpeed, 2
-		RSUB
-	endIF5:
-	AGP temp, 2
-	GGP maxSpeed, 2
-	CALCX LOAD
-	GGP temp, 2
-	CALCX MUL
+	CALC MUL, maxSpeed
 	CALC DIV, maxExpectedVoltageDelta
-RSUB
-
-toggleSpeed:
-	GGP currentMode, 2
-	JC NZ, endIfNZ1
-		SGP currentMode, 2, 1
-		CALC LOAD, maxSpeedHigh
-		AGP maxSpeed, 2
-		JA endSetCurrentMode
-	endIfNZ1:
-		CALC LOAD, maxSpeedLow
-		AGP maxSpeed, 2
-		SGP currentMode, 2, 0
-	endSetCurrentMode:
+	CALC SUB, threshold
+	COMP maxSpeed
+	JC LT, endIF5
+		CALC LOAD, maxSpeed
+	endIF5:	
+	AGP temp, 2
 RSUB
 
 zeroJoystick:
-	WAIT TICKS, tiltMotor, joystickZeroTime
+	WAIT TICKS, tiltMotor, 50
 //save tiltOffset (zero voltage of joystick)
 	GIO tiltSignal, 1
 	AGP tiltOffset, 2

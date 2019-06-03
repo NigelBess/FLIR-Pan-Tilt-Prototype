@@ -6,11 +6,11 @@ panSignal = 0
 joystickPower = 1
 
 //dance positions
-p1 = 500
+p1 = 10000
 t1 =  0
 p2 = 0
-t2 = 886
-p3 = -500
+t2 = 10000
+p3 = -10000
 t3 = 0
 
 //dance Params
@@ -19,12 +19,12 @@ initialPause =  100//ticks
 
 //User values
 threshold = 100//min speed reading to cause motor rotation
-maxSpeed = 50
+maxSpeed = 750
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1000
 maxExpectedVoltageDelta = 600
-maxTiltUp = -20000
-maxTiltDown = -350000
+maxTiltUp = 120000
+maxTiltDown = -200000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 300
@@ -34,7 +34,7 @@ scaledCountsPerSpin = 1000000
 maxExpectedEncoderValue = 300000
 stallGuardThresholdValue = 2
 timeOutTicks = 200
-posModeSpeedValue = 10
+posModeSpeedValue = 50
 joystickZeroTime = 5
 maxCurrentValue = 136
 

@@ -6,11 +6,11 @@ panSignal = 0
 joystickPower = 1
 
 //dance positions
-p1 = 10000
+p1 = 500
 t1 =  0
 p2 = 0
-t2 = 10000
-p3 = -10000
+t2 = 886
+p3 = -500
 t3 = 0
 
 //dance Params
@@ -19,12 +19,13 @@ initialPause =  100//ticks
 
 //User values
 threshold = 100//min speed reading to cause motor rotation
-maxSpeed = 750
+maxSpeedHigh = 750
+maxSpeedLow = 50
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1000
 maxExpectedVoltageDelta = 600
-maxTiltUp = -20000
-maxTiltDown = -350000
+maxTiltUp = 120000
+maxTiltDown = -200000
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 300
@@ -34,7 +35,7 @@ scaledCountsPerSpin = 1000000
 maxExpectedEncoderValue = 300000
 stallGuardThresholdValue = 2
 timeOutTicks = 200
-posModeSpeedValue = 50
+posModeSpeedValue = 5
 joystickZeroTime = 5
 maxCurrentValue = 136
 
@@ -85,6 +86,8 @@ tiltZero = 11//used to zero dance
 panZero = 12//used to zero dance
 tiltTarget = 13
 panTarget = 14
+currentMode = 15
+maxSpeed = 16
 
 
 
@@ -157,6 +160,8 @@ SGP panOffset, 2, 0
 SGP panVel, 2, 0
 SGP panSignalVar, 2, 0
 SGP tiltSignalVar, 2, 0
+SGP currentmOde, 2, 0
+
 
 
 
@@ -175,6 +180,7 @@ GAP encoderPos, tiltMotor
 AAP actualPos, tiltMotor
 
 startMain:
+	CSUB toggleSpeed
 	SAP rampMode, panMotor, 2//velocity mode
 	SAP rampMode, tiltMotor, 2//velocity mode
 	CSUB stopAll
@@ -423,14 +429,33 @@ movingLeft:
 JA endPanCalc
 
 rectify:
-	CALC MUL, maxSpeed
-	CALC DIV, maxExpectedVoltageDelta
+	//absolute value of voltage reading should be in accu
 	CALC SUB, threshold
-	COMP maxSpeed
-	JC LT, endIF5
-		CALC LOAD, maxSpeed
-	endIF5:	
+	COMP maxExpectedVoltageDelta
+	JC LE, endIf5
+		GGP maxSpeed, 2
+		RSUB
+	endIF5:
 	AGP temp, 2
+	GGP maxSpeed, 2
+	CALCX LOAD
+	GGP temp, 2
+	CALCX MUL
+	CALC DIV, maxExpectedVoltageDelta
+RSUB
+
+toggleSpeed:
+	GGP currentMode, 2
+	JC NZ, endIfNZ1
+		SGP currentMode, 2, 1
+		CALC LOAD, maxSpeedHigh
+		AGP maxSpeed, 2
+		JA endSetCurrentMode
+	endIfNZ1:
+		CALC LOAD, maxSpeedLow
+		AGP maxSpeed, 2
+		SGP currentMode, 2, 0
+	endSetCurrentMode:
 RSUB
 
 zeroJoystick:
