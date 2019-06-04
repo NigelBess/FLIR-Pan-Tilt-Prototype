@@ -50,7 +50,7 @@ timeOutTicks = 200
 posModeSpeedValue = 5
 joystickZeroTime = 5
 maxCurrentValue = 136
-standByCurrentValue = 136
+standByCurrentValue = 0
 
 //these are the range in which we can trust the encoder readings. used to calibrate actual position
 minEncoderValue = -40000//100000
