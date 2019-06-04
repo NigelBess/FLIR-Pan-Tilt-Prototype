@@ -17,27 +17,40 @@ t3 = 0
 timeBetweenMoves = 50//ticks
 initialPause =  100//ticks
 
+
+
 //User values
+enforceLimits = 1// set this to zero if you want to bypass tilt limits
+maxTiltUp = 120000
+maxTiltDown = -200000
+//   microStepRes |   resolution  | Pusle Div | maxSpeed (rpm)
+//        6       |       64      |     0     |     2342
+//        5       |       32      |     1     |     2342
+//        4       |       16      |     2     |     2342 
+//        3       |        8      |     3     |     2342 
+//        2       |        4      |     4     |     2342 
+//Minimum recomeended microstepRes: 3
+//Trinamics recommends maximizing microStepRes
+//values greater than 6 don't work for the speed range we need
+microResValue = 6
+pusleDivValue = 0
 threshold = 100//min speed reading to cause motor rotation
 maxSpeedHigh = 750
 maxSpeedLow = 50
 joystickOffMaxVoltage = 40
 joystickOffDelta = 1000
 maxExpectedVoltageDelta = 600
-maxTiltUp = 120000
-maxTiltDown = -200000
-enforceLimits = 1// set this to zero if you want to bypass tilt limits
 encoderPrescaleValue = 4674113// (713213 for decimal)
 maxAccelValue = 300
-standByCurrentValue = 0
 encoderModeValue = 13
 scaledCountsPerSpin = 1000000
 maxExpectedEncoderValue = 300000
-stallGuardThresholdValue = 2
+stallGuardThresholdValue = 24
 timeOutTicks = 200
 posModeSpeedValue = 5
 joystickZeroTime = 5
 maxCurrentValue = 136
+standByCurrentValue = 136
 
 //these are the range in which we can trust the encoder readings. used to calibrate actual position
 minEncoderValue = -40000//100000
@@ -46,6 +59,7 @@ maxEncoderValue = 40000
 
 //**********DONT CHANGE THESE************
 //these convert axis params to names DONT CHANGE THESE
+
 maxCurrent = 6
 microStepRes = 140
 pulseDiv = 154
@@ -56,8 +70,6 @@ targetPos = 0
 maxAccel = 5
 rampMode = 138
 standByCurrent = 7
-freewheelTime = 204
-smartEnergySpeed = 182
 stallGuardFilter = 173
 stallGuardThreshold = 174
 stallGuardSpeed = 181
@@ -104,18 +116,10 @@ SAP stallGuardThreshold, tiltMotor, stallGuardThresholdValue
 SAP stallGuardSpeed, tiltMotor, threshold
 
 
-//   microStepRes | Pusle Div | maxSpeed (rpm)
-//        6       |     0     |     2342
-//        5       |     1     |     2342
-//        4       |     2     |     2342 
-//        3       |     3     |     2342 
-//        2       |     4     |     2342 
-//Minimum recomeended microstepRes: 3
-//Trinamics recommends maximizing microStepRes
-//values greater than 6 don't work for the speed range we need
 
-SAP microStepRes,tiltMotor, 6//mictrostep resolution (f) 2^value
-SAP pulseDiv, tiltMotor, 0//pulse_div
+
+SAP microStepRes,tiltMotor, microResValue//mictrostep resolution (f) 2^value
+SAP pulseDiv, tiltMotor, pusleDivValue//pulse_div
 
 SAP actualSpeed, tiltMotor, 0//actual speed 
 SAP maxAccel, tiltMotor, maxAccelValue//max accel
@@ -139,8 +143,8 @@ SAP standByCurrent, panMotor, standByCurrentValue
 SAP stallGuardFilter, panMotor, 0
 SAP stallGuardThreshold, panMotor, stallGuardThresholdValue
 SAP stallGuardSpeed, panMotor, threshold
-SAP microStepRes,panMotor, 6//mictrostep resolution (f) 2^value
-SAP pulseDiv, panMotor, 0//pulse_div
+SAP microStepRes,panMotor, microResValue//mictrostep resolution (f) 2^value
+SAP pulseDiv, panMotor, pusleDivValue//pulse_div
 SAP actualSpeed, panMotor, 0//actual speed 
 SAP maxAccel, panMotor, maxAccelValue//max accel
 SAP posModeSpeed, panMotor, posModeSpeedValue

@@ -5,7 +5,7 @@ vRpm = 1340;
 n =200;
 vInt = 2047;
 
-fSpace = fliplr(2.^(0:4));%possible microstep range
+fSpace = fliplr(2.^(0:1));%possible microstep range
 for f = fSpace
     vPps = vRpm*n*f/60;
     pulseDiv = log2(16E6*vInt/(2048*32*vPps));

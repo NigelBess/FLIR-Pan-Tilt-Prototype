@@ -5,8 +5,8 @@ tiltMotor = 1
 tiltEnc = 3
 backUpTiltEnc = 6
 
-SGP tiltEnc, 2, 0
+SGP tiltEnc, 2, 34000
 STGP tiltEnc, 2
 
-SGP backUpTiltEnc, 2, 0
+SGP backUpTiltEnc, 2, 34000
 STGP backUpTiltEnc, 2
