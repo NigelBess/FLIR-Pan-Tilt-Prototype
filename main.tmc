@@ -50,7 +50,7 @@ timeOutTicks = 200
 posModeSpeedValue = 5
 joystickZeroTime = 5
 maxCurrentValue = 136
-standByCurrentValue = 0
+standByCurrentValue = 64
 
 //these are the range in which we can trust the encoder readings. used to calibrate actual position
 minEncoderValue = -40000//100000
@@ -500,7 +500,7 @@ loadEncoderValue:
 		RSGP backUpTiltPos, 2
 		GGP backUpTiltPos, 2
 	useOld2:
-	AAP encoderPos, tiltMotor
+	//AAP encoderPos, tiltMotor
 	WAIT TICKS, tiltMotor, 100
 RSUB
 
