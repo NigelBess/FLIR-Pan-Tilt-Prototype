@@ -18,13 +18,13 @@ p3 = left
 t3 = down
 
 p4 = left
-t4 = -18000
+t4 = -14000
 
 p5 = left
 t5 = down
 
 p6 = 0
-t6 = -down
+t6 = down
 
 //dance Params
 timeBetweenMoves = 50//ticks
@@ -34,8 +34,8 @@ initialPause =  100//ticks
 
 //User values
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
-maxTiltUp = 130000
-maxTiltDown = -190000
+maxTiltUp = 300000
+maxTiltDown = 0
 //   microStepRes |   resolution  | Pusle Div | maxSpeed (rpm)
 //        6       |       64      |     0     |     2342
 //        5       |       32      |     1     |     2342

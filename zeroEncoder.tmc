@@ -1,12 +1,22 @@
+value = 34000
+
 // pin numbers
 tiltMotor = 1
 
 //user vars
 tiltEnc = 3
 backUpTiltEnc = 6
+tiltPos = 9
+backUpTiltPos = 10
 
-SGP tiltEnc, 2, 34000
+SGP tiltEnc, 2, value
 STGP tiltEnc, 2
 
-SGP backUpTiltEnc, 2, 34000
+SGP backUpTiltEnc, 2, value
 STGP backUpTiltEnc, 2
+
+SGP tiltPos, 2, value
+STGP tiltPos, 2
+
+SGP backUpTiltPos, 2, value
+STGP backUpTiltPos, 2
