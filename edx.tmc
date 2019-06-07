@@ -5,13 +5,26 @@ tiltSignal = 4 // 4: analog io 1
 panSignal = 0
 joystickPower = 1
 
+down = -100000
+left = -250000
 //dance positions
 p1 = 0
 t1 =  0
+
 p2 = 0
-t2 = -10000
-p3 = 100000
-t3 = 0
+t2 = down
+
+p3 = left
+t3 = down
+
+p4 = left
+t4 = -18000
+
+p5 = left
+t5 = down
+
+p6 = 0
+t6 = -down
 
 //dance Params
 timeBetweenMoves = 50//ticks
@@ -21,8 +34,8 @@ initialPause =  100//ticks
 
 //User values
 enforceLimits = 1// set this to zero if you want to bypass tilt limits
-maxTiltUp = 120000
-maxTiltDown = -200000
+maxTiltUp = 130000
+maxTiltDown = -190000
 //   microStepRes |   resolution  | Pusle Div | maxSpeed (rpm)
 //        6       |       64      |     0     |     2342
 //        5       |       32      |     1     |     2342
@@ -41,7 +54,7 @@ joystickOffMaxVoltage = 40
 joystickOffDelta = 1000
 maxExpectedVoltageDelta = 600
 encoderPrescaleValue = 4674113// (713213 for decimal)
-maxAccelValue = 200
+maxAccelValue = 100
 encoderModeValue = 13
 scaledCountsPerSpin = 1000000
 maxExpectedEncoderValue = 300000
@@ -337,6 +350,39 @@ danceLoop:
 	JC NZ, returnToMain
 	WAIT TICKS, tiltMotor, timeBetweenMoves
 
+	
+	CALC LOAD, p4
+	AGP panTarget, 2
+	CALC LOAD, t4
+	AGP tiltTarget, 2
+	CSUB goToTarget
+
+	//check if joystick is on
+	GIO joystickPower, 0
+	JC NZ, returnToMain
+	WAIT TICKS, tiltMotor, timeBetweenMoves
+
+	CALC LOAD, p5
+	AGP panTarget, 2
+	CALC LOAD, t5
+	AGP tiltTarget, 2
+	CSUB goToTarget
+
+	//check if joystick is on
+	GIO joystickPower, 0
+	JC NZ, returnToMain
+	WAIT TICKS, tiltMotor, timeBetweenMoves
+
+	CALC LOAD, p6
+	AGP panTarget, 2
+	CALC LOAD, t6
+	AGP tiltTarget, 2
+	CSUB goToTarget
+
+	//check if joystick is on
+	GIO joystickPower, 0
+	JC NZ, returnToMain
+	WAIT TICKS, tiltMotor, timeBetweenMoves
 JA danceLoop
 
 goToTarget:
@@ -500,7 +546,7 @@ loadEncoderValue:
 		RSGP backUpTiltPos, 2
 		GGP backUpTiltPos, 2
 	useOld2:
-	//AAP encoderPos, tiltMotor
+	AAP encoderPos, tiltMotor
 	WAIT TICKS, tiltMotor, 100
 RSUB
 
